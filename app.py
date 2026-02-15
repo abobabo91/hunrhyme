@@ -99,7 +99,23 @@ def find_rhymes(input_text, filtered_lines, match_count, loose_matching, rhythm_
         # Ritmikai szűrés: a szavak magánhangzó-eloszlásának egyeznie kell
         if rhythm_matching:
             line_struct = get_word_vowel_counts(line)
-            if line_struct != input_struct:
+            # Ha a rím több szót érint, a többi szónak egyeznie kell hátulról.
+            # Az első szó szótagszáma lehet eltérő.
+            if len(line_struct) != len(input_struct):
+                continue
+            
+            # Utolsó N-1 szó ellenőrzése
+            if len(input_struct) > 1:
+                if line_struct[1:] != input_struct[1:]:
+                    continue
+            
+            # Az első szó ellenőrzése:
+            # Kiszámoljuk, hány szótag esik a rímből az első szóra a bemenetben.
+            input_total_vowels = sum(input_struct)
+            vowels_in_remaining_words = sum(input_struct[1:])
+            vowels_needed_from_first_word = max(0, match_count - vowels_in_remaining_words)
+            
+            if line_struct[0] < vowels_needed_from_first_word:
                 continue
 
         if line_vowels.endswith(suffix):
