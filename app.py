@@ -212,7 +212,7 @@ def find_rhymes(input_text, filtered_lines, match_count, loose_matching, rhythm_
     return results
 
 # --- UI elrendezés ---
-st.set_page_config(page_title="Magyar Rímkereső", layout="wide")
+st.set_page_config(page_title="hunrhyme", layout="wide")
 st.title("hun rhyme")
 
 filtered_data, full_data = load_data()
