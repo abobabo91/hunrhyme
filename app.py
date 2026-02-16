@@ -223,7 +223,7 @@ rhythm_match = st.sidebar.checkbox(
 )
 
 internal_rhyme = st.sidebar.checkbox(
-    "Belső rímek keresése és kiemelése", value=True,
+    "Belső rímek keresése és kiemelése", value=False,
     help="Ha be van kapcsolva, akkor olyan sorokat is megtalál, amik nem csak a végükön, hanem valahol belül rímelnek, és ezeket a belső rímelő magánhangzó-szekvenciákat is kiemeli zölddel."
 )
 
