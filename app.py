@@ -209,27 +209,27 @@ st.sidebar.header("beallitas")
 
 match_len = st.sidebar.slider(
     "Egyező magánhangzók száma", 1, 10, 4,
-    help="legalább hány magánhangzónak kell egyeznie."
+    help="legalább hány magánhangzónak kell egyeznie a sorok végén."
 )
 
 loose_match = st.sidebar.checkbox(
     "Hosszú-rövid magánhangzók párosítása", value=True,
-    help="Megengedi, hogy a hasonló hangzású, de eltérő hosszúságú magánhangzók rímeljenek."
+    help="Megengedi, hogy a hasonló hangzású, de eltérő hosszúságú magánhangzók rímeljenek (o-ó, ö-ő, u-ú, ü-ű, i-í). Az 'a-á' és 'e-é' továbbra is különbözik! Ha ki van kapcsolva akkor 'oszlopok' (o-o-o) nem rímel a 'folyosó' (o-o-ó) szóra."
 )
 
 rhythm_match = st.sidebar.checkbox(
     "Ritmikai szűrő (Szószerkezet)", value=False,
-    help="Csak azonos szószerkezetű találatok."
+    help="Ha be van kapcsolva, akkor csak olyan találatokat mutat, ahol a szavak belső magánhangzó-eloszlása azonos. pl: 'sárga rózsa' (2+2 magánhangzó) rímel a 'drága lóra' (2+2) sorra, de nem rímel az 'fáradt volt ma' (2+1+1) szóra."
 )
 
 internal_rhyme = st.sidebar.checkbox(
     "Belső rímek keresése és kiemelése", value=True,
-    help="Megtalálja és kiemeli a sorokon belüli rímelő részeket is."
+    help="Ha be van kapcsolva, akkor olyan sorokat is megtalál, amik nem csak a végükön, hanem valahol belül rímelnek, és ezeket a belső rímelő magánhangzó-szekvenciákat is kiemeli zölddel."
 )
 
 cross_line = st.sidebar.checkbox(
     "Kereszt-soros rímek", value=False,
-    help="Keres olyan rímeket, amik az egyik sor végén kezdődnek és a következő elején folytatódnak."
+    help="Keres olyan rímeket, amik az egyik sor végén kezdődnek és a következő sor elején folytatódnak, így alkotva egy teljes rímet."
 )
 
 user_input = st.text_input("Írj be egy sort a rímek kereséséhez:", placeholder="pl. mindig egy nő meg a pénz")
