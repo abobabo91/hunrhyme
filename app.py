@@ -85,7 +85,7 @@ def get_internal_rhyme_mask(input_vowels, line_vowels, match_count, include_inte
     """
     mask = [False] * len(line_vowels)
     
-    # End rhyme
+    # End rhyme (mindig számoljuk, ha elég hosszú)
     m_len = get_match_length(input_vowels, line_vowels)
     if m_len >= match_count:
         for i in range(1, m_len + 1):
@@ -107,7 +107,7 @@ def get_internal_rhyme_mask(input_vowels, line_vowels, match_count, include_inte
                 
     return mask
 
-def find_rhymes(input_text, filtered_lines, match_count, loose_matching, rhythm_matching, include_internal=True, cross_line=False):
+def find_rhymes(input_text, filtered_lines, match_count, loose_matching, rhythm_matching, include_internal=True, search_internal=False, cross_line=False):
     input_vowels = normalize_vowels(get_vowels(input_text), loose_matching)
     input_struct = get_word_vowel_counts(input_text)
     
@@ -132,8 +132,26 @@ def find_rhymes(input_text, filtered_lines, match_count, loose_matching, rhythm_
             vowels_needed_from_first_word = max(0, match_count - vowels_in_remaining_words)
             if line_struct[0] < vowels_needed_from_first_word: continue
 
+        # Keresés módja: csak a végén, vagy bárhol a sorban
+        is_match = False
+        m_len = 0
+        
         if line_vowels.endswith(suffix):
+            is_match = True
             m_len = get_match_length(input_vowels, line_vowels)
+        elif search_internal and suffix in line_vowels:
+            is_match = True
+            # Megkeressük a leghosszabb egyező substringet az egész sorban
+            # (Ez egy egyszerűbb közelítés a 'strength' mérésére)
+            for length in range(len(input_vowels), match_count - 1, -1):
+                for i in range(len(input_vowels) - length + 1):
+                    sub = input_vowels[i:i+length]
+                    if sub in line_vowels:
+                        m_len = length
+                        break
+                if m_len > 0: break
+
+        if is_match:
             mask = get_internal_rhyme_mask(input_vowels, line_vowels, match_count, include_internal)
             results.append({
                 "type": "single",
@@ -155,19 +173,9 @@ def find_rhymes(input_text, filtered_lines, match_count, loose_matching, rhythm_
             v1 = normalize_vowels(v1_raw, loose_matching)
             v2 = normalize_vowels(v2_raw, loose_matching)
             
-            combined_vowels = v1 + v2
-            
-            # Kereszt-soros rím: a v1 vége + v2 eleje rímel az input végével
-            # Itt a legegyszerűbb, ha megnézzük a v1 végét és v2 elejét
-            # De valójában bármilyen átfedés lehet.
-            # A leggyakoribb eset: v1 vége + v2 eleje = input vége
-            
             found_cross = False
             best_m = 0
             
-            # Megnézzük az összes lehetséges vágást
-            # pl. input: "alma" (a-a)
-            # v1: "fal" (a), v2: "ma" (a) -> v1+v2 = "aa" matches "aa"
             for split_idx in range(1, match_count):
                 part1_len = split_idx
                 part2_len = match_count - split_idx
@@ -177,9 +185,7 @@ def find_rhymes(input_text, filtered_lines, match_count, loose_matching, rhythm_
                 
                 if v1.endswith(s1) and v2.startswith(s2):
                     found_cross = True
-                    # Megkeressük a maximális egyezést ebben a felállásban
                     m1 = get_match_length(input_vowels[:-part2_len], v1)
-                    # Előre felé egyezés mérése v2-ben
                     m2 = 0
                     rem_input = input_vowels[-part2_len:]
                     for k in range(min(len(rem_input), len(v2))):
@@ -189,14 +195,9 @@ def find_rhymes(input_text, filtered_lines, match_count, loose_matching, rhythm_
                     break
             
             if found_cross:
-                # Maszkok készítése
                 mask1 = [False] * len(v1)
-                # v1 vége
-                m1 = get_match_length(input_vowels[:-part2_len], v1)
                 for k in range(1, m1 + 1): mask1[-k] = True
-                
                 mask2 = [False] * len(v2)
-                # v2 eleje
                 for k in range(m2): mask2[k] = True
                 
                 results.append({
@@ -212,7 +213,7 @@ def find_rhymes(input_text, filtered_lines, match_count, loose_matching, rhythm_
     return results
 
 # --- UI elrendezés ---
-st.set_page_config(page_title="hunrhyme", layout="wide")
+st.set_page_config(page_title="Magyar Rímkereső", layout="wide")
 st.title("hun rhyme")
 
 filtered_data, full_data = load_data()
@@ -235,9 +236,14 @@ rhythm_match = st.sidebar.checkbox(
     help="Csak azonos szószerkezetű találatok."
 )
 
+search_internal = st.sidebar.checkbox(
+    "Belső rímek keresése (nem csak sor végén)", value=False,
+    help="Ha be van kapcsolva, akkor olyan sorokat is megtalál, amik nem a végükön, hanem valahol belül rímelnek."
+)
+
 internal_rhyme = st.sidebar.checkbox(
-    "Belső rímek kiemelése", value=True,
-    help="A sorokon belüli rímelő részeket is kiemeli."
+    "Belső rímek kiemelése (színezés)", value=True,
+    help="A sorokon belüli rímelő részeket is kiemeli zölddel."
 )
 
 cross_line = st.sidebar.checkbox(
@@ -249,7 +255,7 @@ cross_line = st.sidebar.checkbox(
 user_input = st.text_input("Írj be egy sort a rímek kereséséhez:", placeholder="pl. mindig egy nő meg a pénz")
 
 if user_input:
-    rhymes = find_rhymes(user_input, filtered_data, match_len, loose_match, rhythm_match, internal_rhyme, cross_line)
+    rhymes = find_rhymes(user_input, filtered_data, match_len, loose_match, rhythm_match, internal_rhyme, search_internal, cross_line)
     
     highlighted_input = highlight_vowels(user_input)
     st.markdown(f"### Keresés: {highlighted_input}", unsafe_allow_html=True)
@@ -267,7 +273,7 @@ if user_input:
                     h1 = highlight_vowels(res["line1"], highlight_mask=res["mask1"])
                     h2 = highlight_vowels(res["line2"], highlight_mask=res["mask2"])
                     st.markdown(f"**{h1}** / **{h2}** (Kereszt-rím)", unsafe_allow_html=True)
-                    target_line = res["line1"] # Kontextushoz az elsőt használjuk
+                    target_line = res["line1"]
                 
                 exp = st.expander("Szövegkörnyezet")
             
