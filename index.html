@@ -178,6 +178,11 @@ function findRhymes(inputText, filteredLines, matchCount, looseMatching, rhythmM
   const inputVowels = normalizeVowels(getVowels(inputText), looseMatching);
   const inputStruct = getWordVowelCounts(inputText);
   if(!inputVowels) return [];
+  // Clamp matchCount so it never exceeds the input length. Without this, a
+  // search with fewer vowels than the slider value would still produce result
+  // lines (matched via the short suffix) but with no highlights — the mask
+  // threshold mLen >= matchCount could never be satisfied.
+  matchCount = Math.min(matchCount, inputVowels.length);
   const suffix = inputVowels.substring(inputVowels.length - matchCount);
   const results = [];
   const seenLines = new Set();
